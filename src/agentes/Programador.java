@@ -1,13 +1,7 @@
 package agentes;
 
-import java.io.StringReader;
-import java.io.OutputStreamWriter;
-import java.io.BufferedWriter;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.InterruptedIOException;
-import java.io.IOException;
-import java.io.PrintWriter;
 import grupos.*;
  
 import jade.util.leap.List;
@@ -28,98 +22,93 @@ import jade.content.onto.*;
  
 public class Programador extends Agent {
  
-    private Codec codec = new SLCodec();
-    private Ontology ontologia = CalendarOntology.getInstance();
+    private final Codec CODEC = new SLCodec();
+    private final Ontology ONTOLOGIA = CalendarOntology.getInstance();
  
  
-        class WaitPingAndReplyBehaviour extends SimpleBehaviour {
-      private boolean finished = false;
+    class WaitPingAndReplyBehaviour extends SimpleBehaviour {
+        private boolean terminado = false;
  
-      public WaitPingAndReplyBehaviour(Agent a) {
-        super(a);
-      }
+        public WaitPingAndReplyBehaviour(Agent a) {
+          super(a);
+        }
  
-      public void action() {
+        public void action() {
+            System.out.println("\nEsperando estudiantes");
  
-          
-    System.out.println("\nEsperando estudiantes");
+            MessageTemplate mt = MessageTemplate.and(
+                    MessageTemplate.MatchLanguage(CODEC.getName()),
+                    MessageTemplate.MatchOntology(ONTOLOGIA.getName()));
+            ACLMessage  msg = blockingReceive(mt);
  
-    MessageTemplate mt = MessageTemplate.and(
-            MessageTemplate.MatchLanguage(codec.getName()),
-            MessageTemplate.MatchOntology(ontologia.getName()));
-        ACLMessage  msg = blockingReceive(mt);
- 
-        try {
- 
-        if(msg != null){
-        if(msg.getPerformative() == ACLMessage.NOT_UNDERSTOOD){
-                System.out.println("Mensaje NOT UNDERSTOOD recibido");
-            }
-        else{
-            if(msg.getPerformative()== ACLMessage.INFORM){
- 
-            ContentElement ce = getContentManager().extractContent(msg);
-            if (ce instanceof BD){
-                // Recibido un INFORM con contenido correcto
-                BD bd = (BD) ce;
-                
-                Grupo of = bd.getGrupos();
-                System.out.println("Mensaje recibido:");
-                System.out.println("Nombre del grupo: " + of.getNombre());
-                List integrantes= of.getEstudiantes();
-                for(int i=0;i<integrantes.size();i++){
-                 Estudiante e = (Estudiante) integrantes.get(i);
-                System.out.println("Nombre estudiante: " + e.getNombre());
+            try {
+
+                if(msg != null){
+                    if(msg.getPerformative() == ACLMessage.NOT_UNDERSTOOD){
+                        System.out.println("Mensaje NOT UNDERSTOOD recibido");
+                    }
+                    else{
+                        if(msg.getPerformative()== ACLMessage.INFORM){
+                            ContentElement ce = getContentManager().extractContent(msg);
+                            if (ce instanceof BD){
+
+                                BD bd = (BD) ce;
+
+                                Grupo of = bd.getGrupos();
+                                System.out.println("Mensaje recibido:");
+                                System.out.println("Nombre del grupo: " + of.getNombre());
+                                List integrantes= of.getEstudiantes();
+
+                                for(int i=0;i<integrantes.size();i++){
+                                    Estudiante e = (Estudiante) integrantes.get(i);
+                                    System.out.println("Nombre estudiante: " + e.getNombre());
+                                }
+                            }
+                            else{
+                                ACLMessage reply = msg.createReply();
+                                reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
+                                reply.setContent("( UnexpectedContent (expected ping))");
+                                send(reply);
+                            }
+                        }
+                        else {
+                            ACLMessage reply = msg.createReply();
+                            reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
+                            reply.setContent("( (Unexpected-act "+ACLMessage.getPerformative(msg.getPerformative())+")( expected (inform)))");
+                            send(reply);
+                        }
+                    }
+                }else{
+                    System.out.println("No message received");
                 }
-                }
-            else{
-                // Recibido un INFORM con contenido incorrecto
-                ACLMessage reply = msg.createReply();
-                reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
-                reply.setContent("( UnexpectedContent (expected ping))");
-                send(reply);
+
             }
+             catch (jade.content.lang.Codec.CodecException ce) {
+                   System.out.println(ce);
             }
-            else {
-                // Recibida una performativa incorrecta
-                ACLMessage reply = msg.createReply();
-                reply.setPerformative(ACLMessage.NOT_UNDERSTOOD);
-                reply.setContent("( (Unexpected-act "+ACLMessage.getPerformative(msg.getPerformative())+")( expected (inform)))");
-                send(reply);
+            catch (jade.content.onto.OntologyException oe) {
+                System.out.println(oe);
             }
-        }
-        }else{
-        //System.out.println("No message received");
-        }
- 
-         }
-         catch (jade.content.lang.Codec.CodecException ce) {
-               System.out.println(ce);
-        }
-        catch (jade.content.onto.OntologyException oe) {
-            System.out.println(oe);
-        }
      }
  
       public boolean done() {
-        return finished;
-      }
- 
+        return terminado;
+      } 
   }
     
     
     class EnviarMensajeBehaviour extends SimpleBehaviour {
  
-      private boolean finished = false;
+        private boolean terminado = false;
+
+        public EnviarMensajeBehaviour(Agent a) {
+            super(a);
+        }
  
-    public EnviarMensajeBehaviour(Agent a) {
-        super(a);
-    }
- 
-    public void action() {
-        try
-    {
-        System.out.println("\nRealizado por: \nAldo Esteban Garces Correa \nAndres Felipe Gonzalez Bermudez \nWilson Daniel Ospina Leon");
+        public void action() {
+            try
+        {
+            System.out.println("\nRealizado por: \nAldo Esteban Garces Correa \nAndres Felipe Gonzalez Bermudez \nWilson Daniel Ospina Leon");
             System.out.println("\nIntroduce el nombre del agente interface (el nombre dado al Agente al lanzar el -container): ");
             BufferedReader buff = new BufferedReader(new InputStreamReader(System.in));
             String respuesta = buff.readLine();
@@ -128,9 +117,9 @@ public class Programador extends Agent {
             ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
             msg.setSender(getAID());
             msg.addReceiver(r);
-            msg.setLanguage(codec.getName());
-               msg.setOntology(ontologia.getName());
- 
+            msg.setLanguage(CODEC.getName());
+               msg.setOntology(ONTOLOGIA.getName());
+
             System.out.println("\nIntroduce el NOMBRE del grupo:");
             respuesta = buff.readLine();
             Grupo g = new Grupo();
@@ -150,23 +139,17 @@ public class Programador extends Agent {
             BD bd = new BD();
             bd.setGrupos(g);
             getContentManager().fillContent(msg, bd);
- 
+
             send(msg);
-           }
-           catch (java.io.IOException io)
-            {System.out.println(io);
+            }
+            catch (java.io.IOException | jade.content.lang.Codec.CodecException | jade.content.onto.OntologyException io){
+                System.out.println(io);
+            }
+        catch (Exception e){
+            System.out.println("\n\n... Terminando ...");
+            terminado = true;
         }
-        catch (jade.content.lang.Codec.CodecException ce) {
-               System.out.println(ce);
         }
-        catch (jade.content.onto.OntologyException oe) {
-            System.out.println(oe);
-        }
-    catch (Exception e){
-        System.out.println("\n\n... Terminando ...");
-        finished=true;
-    }
-    }
  
     public boolean done() {
  
@@ -192,8 +175,8 @@ public class Programador extends Agent {
         doDelete();
     }
  
-    getContentManager().registerLanguage(codec);
-    getContentManager().registerOntology(ontologia);
+    getContentManager().registerLanguage(CODEC);
+    getContentManager().registerOntology(ONTOLOGIA);
  
     EnviarMensajeBehaviour EnviarBehaviour = new EnviarMensajeBehaviour(this);
     addBehaviour(EnviarBehaviour);
