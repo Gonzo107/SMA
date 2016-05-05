@@ -1,0 +1,1 @@
+( ap-description  :name "Calendario" :ap-services (set ( ap-service  :name fipa.mts.mtp.http.std :type fipa.mts.mtp.http.std :addresses (sequence http://168.176.122.48:7778/acc))))
